@@ -2,7 +2,6 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"log"
 	"net/http"
 
@@ -18,8 +17,7 @@ func main() {
 	go hub.run()
 	r.HandleFunc("/room/{id:[1-9]+}", func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
-		fmt.Println(vars["id"])
-		serveWs(hub, w, r)
+		serveWs(hub, w, r, vars["id"])
 	})
 	err := http.ListenAndServe(*addr, r)
 	if err != nil {
