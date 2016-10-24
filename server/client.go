@@ -39,7 +39,9 @@ type Client struct {
 	hub *Hub
 
 	// The websocket connection.
-	conn *websocket.Conn
+	conn    *websocket.Conn
+	message []byte
+	roomId  string
 
 	// Buffered channel of outbound messages.
 	send chan []byte
@@ -63,7 +65,8 @@ func (c *Client) readPump() {
 			break
 		}
 		message = bytes.TrimSpace(bytes.Replace(message, newline, space, -1))
-		c.hub.broadcast <- message
+		c.message = message
+		c.hub.broadcast <- c
 	}
 }
 
@@ -121,7 +124,13 @@ func serveWs(hub *Hub, w http.ResponseWriter, r *http.Request, roomId string) {
 		log.Println(err)
 		return
 	}
-	client := &Client{hub: hub, conn: conn, send: make(chan []byte, 256)}
+
+	client := &Client{
+		hub:    hub,
+		conn:   conn,
+		send:   make(chan []byte, 256),
+		roomId: roomId,
+	}
 	client.hub.register <- client
 	go client.writePump()
 	client.readPump()

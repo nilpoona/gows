@@ -20,12 +20,15 @@ document.addEventListener("DOMContentLoaded", function(event) {
         if (!msg.value) {
             return false;
         }
+
+        const id = location.search.substring(1).replace(/room=/, '');
         conn.send(msg.value);
         msg.value = "";
         return false;
     };
 
-    const conn = new WebSocket("ws://127.0.0.1:8088/room/1");
+    const id = location.search.substring(1).replace(/room=/, '');
+    const conn = new WebSocket(`ws://127.0.0.1:8088/room/${id}`);
     conn.onclose = function (evt) {
         let item = document.createElement("div");
         item.innerHTML = "<b>Connection closed.</b>";
