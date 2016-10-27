@@ -1,0 +1,3 @@
+[server]
+host = "/tmp/ws.sock"
+port = "8088"

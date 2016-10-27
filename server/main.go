@@ -7,12 +7,11 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"regexp"
 	"syscall"
 
 	"github.com/gorilla/mux"
 )
-
-var addr = flag.String("addr", ":8088", "http service address")
 
 func shutdown(listener net.Listener) {
 	c := make(chan os.Signal, 2)
@@ -27,34 +26,47 @@ func shutdown(listener net.Listener) {
 	}()
 }
 
+func listenServer(config *Config, router *mux.Router) {
+	r := regexp.MustCompile("\\.sock")
+	if r.MatchString(config.Server.Host) {
+
+		listener, err := net.Listen("unix", config.Server.Host)
+		if err != nil {
+			log.Fatalf("error: %v", err)
+		}
+
+		defer func() {
+			if err := listener.Close(); err != nil {
+				log.Printf("error: %v", err)
+			}
+		}()
+
+		shutdown(listener)
+		if err := http.Serve(listener, router); err != nil {
+			log.Fatalf("error: %v", err)
+		}
+
+	} else {
+		address := config.Server.Host + ":" + config.Server.Port
+		addr := flag.String("addr", address, "http service address")
+		err := http.ListenAndServe(*addr, router)
+		if err != nil {
+			log.Fatal("ListenAndServe: ", err)
+		}
+	}
+}
+
 func main() {
 	flag.Parse()
 	hub := newHub()
-	r := mux.NewRouter()
+	router := mux.NewRouter()
 	go hub.run()
-	r.HandleFunc("/room/{id:[1-9]+}", func(w http.ResponseWriter, r *http.Request) {
+	config := NewConfig()
+
+	router.HandleFunc("/room/{id:[1-9]+}", func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		serveWs(hub, w, r, vars["id"])
 	})
 
-	listener, err := net.Listen("unix", "/tmp/ws.sock")
-	if err != nil {
-		log.Fatalf("error: %v", err)
-	}
-
-	defer func() {
-		if err := listener.Close(); err != nil {
-			log.Printf("error: %v", err)
-		}
-	}()
-
-	if err := http.Serve(listener, r); err != nil {
-		log.Fatalf("error: %v", err)
-	}
-	/*
-		err := http.ListenAndServe(*addr, r)
-		if err != nil {
-			log.Fatal("ListenAndServe: ", err)
-		}
-	*/
+	listenServer(config, router)
 }
