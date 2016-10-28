@@ -9,11 +9,16 @@ import (
 
 type Config struct {
 	Server ServerConfig
+	Hub    HubConfig
 }
 
 type ServerConfig struct {
 	Host string
 	Port string
+}
+
+type HubConfig struct {
+	Worker int
 }
 
 func NewConfig() *Config {

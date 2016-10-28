@@ -58,14 +58,20 @@ func listenServer(config *Config, router *mux.Router) {
 
 func main() {
 	flag.Parse()
-	hub := newHub()
 	router := mux.NewRouter()
-	go hub.run()
 	config := NewConfig()
+	hm := newHubManager(config.Hub.Worker)
+
+	hm.runAllHub()
 
 	router.HandleFunc("/room/{id:[1-9]+}", func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
-		serveWs(hub, w, r, vars["id"])
+		roomId := vars["id"]
+		hub := hm.getHubByRoomid(roomId)
+		if hub == nil {
+			hub = hm.getHub()
+		}
+		serveWs(hub, w, r, roomId)
 	})
 
 	listenServer(config, router)

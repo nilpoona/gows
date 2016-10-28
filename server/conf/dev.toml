@@ -1,3 +1,6 @@
 [server]
-host = "/tmp/ws.sock"
+host = "127.0.0.1"
 port = "8088"
+
+[hub]
+worker = 3
