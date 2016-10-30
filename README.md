@@ -6,3 +6,5 @@
 - go get github.com/BurntSushi/toml
 - go get github.com/BurntSushi/toml/cmd/tomlv
 
+## env
+`export GO_ENV=dev`
