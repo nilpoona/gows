@@ -24,7 +24,7 @@ type HubConfig struct {
 func NewConfig() *Config {
 	var config *Config
 	env := os.Getenv("GO_ENV")
-	_, err := toml.DecodeFile("conf/"+env+".toml", &config)
+	_, err := toml.DecodeFile("../conf/"+env+".toml", &config)
 	if err != nil {
 		log.Printf("error: %v", err)
 	}
