@@ -4,7 +4,7 @@ const webpack = require('webpack');
 var destPath = 'dest';
 
 let config = {
-    entry: ['./client/index.js'],
+    entry: ['./index.js'],
     output: {
         path: path.resolve(destPath),
         filename: 'bundle.js',
