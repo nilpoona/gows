@@ -1,0 +1,5 @@
+package: github.com/YutakaHorikawa/gows/server
+import:
+- package: github.com/BurntSushi/toml
+- package: github.com/gorilla/mux
+- package: github.com/gorilla/websocket

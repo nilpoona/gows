@@ -21,7 +21,7 @@ func shutdown(listener net.Listener) {
 		if err := listener.Close(); err != nil {
 			log.Printf("error: %v", err)
 		}
-		os.Exit(1)
+		os.Exit(0)
 
 	}()
 }
@@ -49,10 +49,7 @@ func listenServer(config *Config, router *mux.Router) {
 	} else {
 		address := config.Server.Host + ":" + config.Server.Port
 		addr := flag.String("addr", address, "http service address")
-		err := http.ListenAndServe(*addr, router)
-		if err != nil {
-			log.Fatal("ListenAndServe: ", err)
-		}
+		log.Fatal(http.ListenAndServe(*addr, router))
 	}
 }
 
