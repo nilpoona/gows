@@ -1,7 +1,9 @@
-package main
+package hub
 
 import (
 	"sync/atomic"
+
+	"github.com/YutakaHorikawa/gows/ws"
 )
 
 type HubManager struct {
@@ -9,14 +11,14 @@ type HubManager struct {
 }
 
 type Hub struct {
-	clients        map[string]map[*Client]bool
-	broadcast      chan *Client
-	register       chan *Client
-	unregister     chan *Client
+	clients        map[string]map[*ws.Client]bool
+	Broadcast      chan *ws.Client
+	Register       chan *ws.Client
+	Unregister     chan *ws.Client
 	connectedAmout int32
 }
 
-func (hm *HubManager) getHub() *Hub {
+func (hm *HubManager) GetHub() *Hub {
 	var h *Hub
 	first := true
 	for i := range hm.hubs {
@@ -33,7 +35,7 @@ func (hm *HubManager) getHub() *Hub {
 	return h
 }
 
-func (hm *HubManager) getHubByRoomid(roomId string) *Hub {
+func (hm *HubManager) GetHubByRoomid(roomId string) *Hub {
 	var h *Hub
 	for i := range hm.hubs {
 		hub := hm.hubs[i]
@@ -49,17 +51,17 @@ func (hm *HubManager) setHub(hub *Hub, index int) {
 	hm.hubs[index] = hub
 }
 
-func (hm *HubManager) runAllHub() {
+func (hm *HubManager) RunAllHub() {
 	for i := range hm.hubs {
 		go hm.hubs[i].run()
 	}
 }
 
-func (h *Hub) increaseConnectedAmount() {
+func (h *Hub) IncreaseConnectedAmount() {
 	atomic.AddInt32(&h.connectedAmout, 1)
 }
 
-func newHubManager(worker int) *HubManager {
+func NewHubManager(worker int) *HubManager {
 	hubManager := &HubManager{
 		hubs: make([]*Hub, worker),
 	}
@@ -74,10 +76,10 @@ func newHubManager(worker int) *HubManager {
 
 func newHub() *Hub {
 	return &Hub{
-		broadcast:      make(chan *Client),
-		register:       make(chan *Client),
-		unregister:     make(chan *Client),
-		clients:        make(map[string]map[*Client]bool),
+		Broadcast:      make(chan *ws.Client),
+		Register:       make(chan *ws.Client),
+		Unregister:     make(chan *ws.Client),
+		clients:        make(map[string]map[*ws.Client]bool),
 		connectedAmout: 0,
 	}
 }
@@ -85,20 +87,20 @@ func newHub() *Hub {
 func (h *Hub) run() {
 	for {
 		select {
-		case client := <-h.register:
+		case client := <-h.Register:
 			if _, ok := h.clients[client.roomId]; ok {
 				h.clients[client.roomId][client] = true
 			} else {
-				h.clients[client.roomId] = make(map[*Client]bool)
+				h.clients[client.roomId] = make(map[*ws.Client]bool)
 				h.clients[client.roomId][client] = true
 			}
-			h.increaseConnectedAmount()
-		case client := <-h.unregister:
+			h.IncreaseConnectedAmount()
+		case client := <-h.Unregister:
 			if _, ok := h.clients[client.roomId][client]; ok {
 				delete(h.clients[client.roomId], client)
 				close(client.send)
 			}
-		case client := <-h.broadcast:
+		case client := <-h.Broadcast:
 			message := client.message
 			for c := range h.clients[client.roomId] {
 				select {

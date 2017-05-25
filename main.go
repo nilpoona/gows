@@ -2,74 +2,33 @@ package main
 
 import (
 	"flag"
-	"log"
-	"net"
 	"net/http"
-	"os"
-	"os/signal"
-	"regexp"
-	"syscall"
+
+	"github.com/YutakaHorikawa/gows/config"
+	"github.com/YutakaHorikawa/gows/hub"
+	"github.com/YutakaHorikawa/gows/server"
+	"github.com/YutakaHorikawa/gows/ws"
 
 	"github.com/gorilla/mux"
 )
 
-func shutdown(listener net.Listener) {
-	c := make(chan os.Signal, 2)
-	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
-	go func() {
-		<-c
-		if err := listener.Close(); err != nil {
-			log.Printf("error: %v", err)
-		}
-		os.Exit(0)
-
-	}()
-}
-
-func listenServer(config *Config, router *mux.Router) {
-	r := regexp.MustCompile("\\.sock")
-	if r.MatchString(config.Server.Host) {
-
-		listener, err := net.Listen("unix", config.Server.Host)
-		if err != nil {
-			log.Fatalf("error: %v", err)
-		}
-
-		defer func() {
-			if err := listener.Close(); err != nil {
-				log.Printf("error: %v", err)
-			}
-		}()
-
-		shutdown(listener)
-		if err := http.Serve(listener, router); err != nil {
-			log.Fatalf("error: %v", err)
-		}
-
-	} else {
-		address := config.Server.Host + ":" + config.Server.Port
-		addr := flag.String("addr", address, "http service address")
-		log.Fatal(http.ListenAndServe(*addr, router))
-	}
-}
-
 func main() {
 	flag.Parse()
-	router := mux.NewRouter()
-	config := NewConfig()
-	hm := newHubManager(config.Hub.Worker)
+	router := server.NewRouter()
+	config := config.NewConfig()
+	hm := hub.NewHubManager(config.Hub.Worker)
 
-	hm.runAllHub()
+	hm.RunAllHub()
 
 	router.HandleFunc("/room/{id:[1-9]+}", func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		roomId := vars["id"]
-		hub := hm.getHubByRoomid(roomId)
+		hub := hm.GetHubByRoomid(roomId)
 		if hub == nil {
-			hub = hm.getHub()
+			hub = hm.GetHub()
 		}
-		serveWs(hub, w, r, roomId)
+		ws.ServeWs(hub, w, r, roomId)
 	})
 
-	listenServer(config, router)
+	server.ListenServer(config.Server.Host, config.Server.Port, router)
 }
