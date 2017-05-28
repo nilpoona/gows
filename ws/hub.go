@@ -1,9 +1,7 @@
-package hub
+package ws
 
 import (
 	"sync/atomic"
-
-	"github.com/YutakaHorikawa/gows/ws"
 )
 
 type HubManager struct {
@@ -11,10 +9,10 @@ type HubManager struct {
 }
 
 type Hub struct {
-	clients        map[string]map[*ws.Client]bool
-	Broadcast      chan *ws.Client
-	Register       chan *ws.Client
-	Unregister     chan *ws.Client
+	clients        map[string]map[*Client]bool
+	Broadcast      chan *Client
+	Register       chan *Client
+	Unregister     chan *Client
 	connectedAmout int32
 }
 
@@ -76,10 +74,10 @@ func NewHubManager(worker int) *HubManager {
 
 func newHub() *Hub {
 	return &Hub{
-		Broadcast:      make(chan *ws.Client),
-		Register:       make(chan *ws.Client),
-		Unregister:     make(chan *ws.Client),
-		clients:        make(map[string]map[*ws.Client]bool),
+		Broadcast:      make(chan *Client),
+		Register:       make(chan *Client),
+		Unregister:     make(chan *Client),
+		clients:        make(map[string]map[*Client]bool),
 		connectedAmout: 0,
 	}
 }
@@ -91,7 +89,7 @@ func (h *Hub) run() {
 			if _, ok := h.clients[client.roomId]; ok {
 				h.clients[client.roomId][client] = true
 			} else {
-				h.clients[client.roomId] = make(map[*ws.Client]bool)
+				h.clients[client.roomId] = make(map[*Client]bool)
 				h.clients[client.roomId][client] = true
 			}
 			h.IncreaseConnectedAmount()
