@@ -5,7 +5,6 @@ import (
 	"net/http"
 
 	"github.com/YutakaHorikawa/gows/config"
-	"github.com/YutakaHorikawa/gows/hub"
 	"github.com/YutakaHorikawa/gows/server"
 	"github.com/YutakaHorikawa/gows/ws"
 
@@ -16,7 +15,7 @@ func main() {
 	flag.Parse()
 	router := server.NewRouter()
 	config := config.NewConfig()
-	hm := hub.NewHubManager(config.Hub.Worker)
+	hm := ws.NewHubManager(config.Hub.Worker)
 
 	hm.RunAllHub()
 
