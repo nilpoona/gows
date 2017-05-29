@@ -30,6 +30,10 @@ func NewRouter() *mux.Router {
 	return mux.NewRouter()
 }
 
+func Vars(r *http.Request) map[string]string {
+	return mux.Vars(r)
+}
+
 func ListenServer(host, port string, router *mux.Router) {
 	r := regexp.MustCompile("\\.sock")
 	if r.MatchString(host) {

@@ -7,8 +7,6 @@ import (
 	"github.com/YutakaHorikawa/gows/config"
 	"github.com/YutakaHorikawa/gows/server"
 	"github.com/YutakaHorikawa/gows/ws"
-
-	"github.com/gorilla/mux"
 )
 
 func main() {
@@ -20,7 +18,7 @@ func main() {
 	hm.RunAllHub()
 
 	router.HandleFunc("/room/{id:[1-9]+}", func(w http.ResponseWriter, r *http.Request) {
-		vars := mux.Vars(r)
+		vars := server.Vars(r)
 		roomId := vars["id"]
 		hub := hm.GetHubByRoomid(roomId)
 		if hub == nil {
